@@ -2,11 +2,27 @@
 
 :root {
   color-scheme: light;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 body {
   margin: 0;
-  background: #f7faf8;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 8% 2%, rgb(209 250 229 / 45%), transparent 24rem),
+    #f8faf9;
   color: #14281d;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #a7f3d0;
+  color: #064e3b;
 }
