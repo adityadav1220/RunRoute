@@ -13,6 +13,10 @@ RunRoute is a smart running-route application in development that will help runn
 npm install
 ```
 
+## Mapbox setup
+
+Copy `.env.example` to `.env.local`, then replace the placeholder with a public Mapbox access token assigned to `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. Never commit `.env.local`.
+
 ## Development
 
 ```bash

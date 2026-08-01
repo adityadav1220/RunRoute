@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import type { MapCoordinate } from "@/types/map";
 import type {
   DistanceUnit,
   PlannerConfig,
@@ -83,19 +84,23 @@ interface PlannerFormProps {
   isGenerating: boolean;
   onGenerate: (config: PlannerConfig) => void;
   onFormChange: () => void;
-  onRouteTypeChange: (routeType: RouteType) => void;
+  selectedMapPoint: MapCoordinate | null;
+  onClearMapPoint: () => void;
 }
 
 export function PlannerForm({
   isGenerating,
   onGenerate,
   onFormChange,
-  onRouteTypeChange,
+  selectedMapPoint,
+  onClearMapPoint,
 }: PlannerFormProps) {
   const [config, setConfig] = useState(initialConfig);
   const [locationMessage, setLocationMessage] = useState("");
+  const startingLocation =
+    config.startingLocation || (selectedMapPoint ? "Dropped map pin" : "");
   const maximumDistance = config.unit === "miles" ? 50 : 80;
-  const isLocationValid = config.startingLocation.trim().length > 0;
+  const isLocationValid = startingLocation.trim().length > 0;
   const isDistanceValid =
     Number.isFinite(config.distance) &&
     config.distance > 0 &&
@@ -146,7 +151,7 @@ export function PlannerForm({
     if (isValid && !isGenerating) {
       onGenerate({
         ...config,
-        startingLocation: config.startingLocation.trim(),
+        startingLocation: startingLocation.trim(),
       });
     }
   }
@@ -178,7 +183,7 @@ export function PlannerForm({
           id="starting-location"
           type="text"
           disabled={isGenerating}
-          value={config.startingLocation}
+          value={startingLocation}
           onChange={(event) =>
             updateConfig("startingLocation", event.target.value)
           }
@@ -188,7 +193,8 @@ export function PlannerForm({
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <p id="location-help" className="text-xs text-slate-500">
-            Used only to configure this illustrative demo.
+            Enter a label or click the map to place a starting point. Typed
+            labels do not reposition the map.
           </p>
           <button
             type="button"
@@ -210,6 +216,35 @@ export function PlannerForm({
         >
           {locationMessage}
         </p>
+        {selectedMapPoint && (
+          <div
+            className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3"
+            aria-live="polite"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">
+                  Map starting point
+                </p>
+                <p className="mt-1 font-mono text-xs text-slate-700">
+                  {selectedMapPoint.latitude.toFixed(5)} latitude ·{" "}
+                  {selectedMapPoint.longitude.toFixed(5)} longitude
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={onClearMapPoint}
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-300 outline-none transition hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Clear map point
+              </button>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-slate-600">
+              This coordinate is real. Generated route metrics remain demo data.
+            </p>
+          </div>
+        )}
       </div>
 
       <fieldset>
@@ -270,10 +305,7 @@ export function PlannerForm({
                   name="route-type"
                   value={option.value}
                   checked={selected}
-                  onChange={() => {
-                    updateConfig("routeType", option.value);
-                    onRouteTypeChange(option.value);
-                  }}
+                  onChange={() => updateConfig("routeType", option.value)}
                   className="sr-only"
                 />
                 <span className="flex items-center justify-between gap-2">

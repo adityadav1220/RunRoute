@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { generateMockRoutes } from "@/lib/mock-routes";
-import type { MockRoute, PlannerConfig, RouteType } from "@/types/routes";
+import type { MapCoordinate } from "@/types/map";
+import type { MockRoute, PlannerConfig } from "@/types/routes";
 import { RoutePreview } from "@/components/preview/route-preview";
 import { RouteResults } from "@/components/routes/route-results";
 import { PlannerForm } from "./planner-form";
@@ -12,8 +13,8 @@ const GENERATION_DELAY_MS = 450;
 export function PlannerApp() {
   const [routes, setRoutes] = useState<MockRoute[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<MockRoute | null>(null);
+  const [startingPoint, setStartingPoint] = useState<MapCoordinate | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [previewRouteType, setPreviewRouteType] = useState<RouteType>("loop");
   const generationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -32,7 +33,6 @@ export function PlannerApp() {
     setIsGenerating(true);
     setRoutes([]);
     setSelectedRoute(null);
-    setPreviewRouteType(config.routeType);
 
     generationTimer.current = setTimeout(() => {
       const generatedRoutes = generateMockRoutes(config);
@@ -48,6 +48,16 @@ export function PlannerApp() {
       setRoutes([]);
       setSelectedRoute(null);
     }
+  }
+
+  function handleMapPointSelect(point: MapCoordinate) {
+    handlePlannerChange();
+    setStartingPoint(point);
+  }
+
+  function handleMapPointClear() {
+    handlePlannerChange();
+    setStartingPoint(null);
   }
 
   return (
@@ -83,12 +93,12 @@ export function PlannerApp() {
         </div>
         <div className="max-w-xl lg:text-right">
           <p className="text-sm leading-6 text-slate-600">
-            Shape a run around your distance and style, then compare three
-            illustrative route concepts before mapping arrives.
+            Place a real starting point on the map, shape a run around your
+            preferences, and compare illustrative route concepts.
           </p>
           <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
             <span className="size-2 rounded-full bg-amber-500" />
-            Local demo data only
+            Real map point · demo route metrics
           </p>
         </div>
       </header>
@@ -102,15 +112,17 @@ export function PlannerApp() {
             isGenerating={isGenerating}
             onGenerate={handleGenerate}
             onFormChange={handlePlannerChange}
-            onRouteTypeChange={setPreviewRouteType}
+            selectedMapPoint={startingPoint}
+            onClearMapPoint={handleMapPointClear}
           />
         </aside>
 
         <div className="min-w-0" aria-busy={isGenerating}>
           <RoutePreview
             route={selectedRoute}
-            routeType={previewRouteType}
             isGenerating={isGenerating}
+            selectedPoint={startingPoint}
+            onPointSelect={handleMapPointSelect}
           />
 
           {!isGenerating && routes.length > 0 && (
