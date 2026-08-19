@@ -1,18 +1,18 @@
 import { RunnerMap } from "@/components/map/runner-map";
-import type { MapCoordinate } from "@/types/map";
+import type { MapCoordinate, SelectedLocation } from "@/types/map";
 import type { MockRoute } from "@/types/routes";
 
 interface RoutePreviewProps {
   route: MockRoute | null;
   isGenerating: boolean;
-  selectedPoint: MapCoordinate | null;
+  selectedLocation: SelectedLocation | null;
   onPointSelect: (point: MapCoordinate) => void;
 }
 
 export function RoutePreview({
   route,
   isGenerating,
-  selectedPoint,
+  selectedLocation,
   onPointSelect,
 }: RoutePreviewProps) {
   const unitLabel = route?.unit === "kilometers" ? "km" : "mi";
@@ -46,7 +46,7 @@ export function RoutePreview({
 
       <div className="relative">
         <RunnerMap
-          selectedPoint={selectedPoint}
+          selectedLocation={selectedLocation}
           onPointSelect={onPointSelect}
         />
         {isGenerating && (
@@ -71,7 +71,7 @@ export function RoutePreview({
           </span>
           <div>
             <p id="map-instructions" className="text-sm font-semibold text-slate-800">
-              {selectedPoint
+              {selectedLocation
                 ? "The selected map point is a real coordinate."
                 : "With Mapbox configured, click the map to place your starting point."}
             </p>

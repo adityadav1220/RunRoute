@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { generateMockRoutes } from "@/lib/mock-routes";
-import type { MapCoordinate } from "@/types/map";
+import type { MapCoordinate, SelectedLocation } from "@/types/map";
 import type { MockRoute, PlannerConfig } from "@/types/routes";
 import { RoutePreview } from "@/components/preview/route-preview";
 import { RouteResults } from "@/components/routes/route-results";
@@ -13,7 +13,9 @@ const GENERATION_DELAY_MS = 450;
 export function PlannerApp() {
   const [routes, setRoutes] = useState<MockRoute[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<MockRoute | null>(null);
-  const [startingPoint, setStartingPoint] = useState<MapCoordinate | null>(null);
+  const [startingLocation, setStartingLocation] =
+    useState<SelectedLocation | null>(null);
+  const [locationQuery, setLocationQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const generationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -52,12 +54,25 @@ export function PlannerApp() {
 
   function handleMapPointSelect(point: MapCoordinate) {
     handlePlannerChange();
-    setStartingPoint(point);
+    const location: SelectedLocation = {
+      ...point,
+      label: "Dropped map pin",
+      source: "map",
+    };
+    setStartingLocation(location);
+    setLocationQuery(location.label);
   }
 
-  function handleMapPointClear() {
+  function handleLocationSelect(location: SelectedLocation) {
     handlePlannerChange();
-    setStartingPoint(null);
+    setStartingLocation(location);
+    setLocationQuery(location.label);
+  }
+
+  function handleLocationClear() {
+    handlePlannerChange();
+    setStartingLocation(null);
+    setLocationQuery("");
   }
 
   return (
@@ -112,8 +127,11 @@ export function PlannerApp() {
             isGenerating={isGenerating}
             onGenerate={handleGenerate}
             onFormChange={handlePlannerChange}
-            selectedMapPoint={startingPoint}
-            onClearMapPoint={handleMapPointClear}
+            selectedLocation={startingLocation}
+            locationQuery={locationQuery}
+            onLocationQueryChange={setLocationQuery}
+            onLocationSelect={handleLocationSelect}
+            onLocationClear={handleLocationClear}
           />
         </aside>
 
@@ -121,7 +139,7 @@ export function PlannerApp() {
           <RoutePreview
             route={selectedRoute}
             isGenerating={isGenerating}
-            selectedPoint={startingPoint}
+            selectedLocation={startingLocation}
             onPointSelect={handleMapPointSelect}
           />
 

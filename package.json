@@ -9,6 +9,7 @@
     "build": "next build"
   },
   "dependencies": {
+    "@mapbox/search-js-core": "1.6.0",
     "mapbox-gl": "3.27.0",
     "next": "16.2.12",
     "react": "19.2.8",

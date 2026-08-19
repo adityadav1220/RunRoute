@@ -7,7 +7,7 @@ import type {
   MapMouseEvent,
   Marker as MapboxMarker,
 } from "mapbox-gl";
-import type { MapCoordinate } from "@/types/map";
+import type { MapCoordinate, SelectedLocation } from "@/types/map";
 
 type MapboxLibrary = typeof import("mapbox-gl").default;
 type MapStatus =
@@ -29,7 +29,7 @@ const INITIAL_CENTER: MapCoordinate = {
 };
 
 interface RunnerMapProps {
-  selectedPoint: MapCoordinate | null;
+  selectedLocation: SelectedLocation | null;
   onPointSelect: (point: MapCoordinate) => void;
 }
 
@@ -77,12 +77,12 @@ function placeMarker(
     .addTo(map);
 }
 
-export function RunnerMap({ selectedPoint, onPointSelect }: RunnerMapProps) {
+export function RunnerMap({ selectedLocation, onPointSelect }: RunnerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markerRef = useRef<MapboxMarker | null>(null);
   const mapboxRef = useRef<MapboxLibrary | null>(null);
-  const selectedPointRef = useRef(selectedPoint);
+  const selectedLocationRef = useRef(selectedLocation);
   const onPointSelectRef = useRef(onPointSelect);
   const [status, setStatus] = useState<MapStatus>(
     MAPBOX_ACCESS_TOKEN ? "loading" : "missing-token",
@@ -93,18 +93,31 @@ export function RunnerMap({ selectedPoint, onPointSelect }: RunnerMapProps) {
   }, [onPointSelect]);
 
   useEffect(() => {
-    selectedPointRef.current = selectedPoint;
+    selectedLocationRef.current = selectedLocation;
 
-    if (!selectedPoint) {
+    if (!selectedLocation) {
       markerRef.current?.remove();
       markerRef.current = null;
       return;
     }
 
     if (mapRef.current && mapboxRef.current) {
-      placeMarker(mapboxRef.current, mapRef.current, markerRef, selectedPoint);
+      placeMarker(
+        mapboxRef.current,
+        mapRef.current,
+        markerRef,
+        selectedLocation,
+      );
+
+      if (selectedLocation.source !== "map") {
+        mapRef.current.flyTo({
+          center: [selectedLocation.longitude, selectedLocation.latitude],
+          zoom: 14,
+          essential: true,
+        });
+      }
     }
-  }, [selectedPoint]);
+  }, [selectedLocation]);
 
   useEffect(() => {
     if (!MAPBOX_ACCESS_TOKEN || !containerRef.current) {
@@ -160,13 +173,23 @@ export function RunnerMap({ selectedPoint, onPointSelect }: RunnerMapProps) {
           map.resize();
           setStatus("ready");
 
-          if (selectedPointRef.current) {
+          if (selectedLocationRef.current) {
             placeMarker(
               mapbox,
               map,
               markerRef,
-              selectedPointRef.current,
+              selectedLocationRef.current,
             );
+
+            if (selectedLocationRef.current.source !== "map") {
+              map.jumpTo({
+                center: [
+                  selectedLocationRef.current.longitude,
+                  selectedLocationRef.current.latitude,
+                ],
+                zoom: 14,
+              });
+            }
           }
         };
 

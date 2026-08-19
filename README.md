@@ -2,6 +2,10 @@
 
 RunRoute is a smart running-route application in development that will help runners generate personalized routes based on their distance, route type, surroundings, conditions, and exploration preferences.
 
+## Live application
+
+[Open RunRoute](https://runroute-kappa.vercel.app)
+
 ## Prerequisites
 
 - Node.js 20.19+, 22.13+, or 24+

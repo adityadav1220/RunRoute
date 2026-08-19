@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { MapCoordinate } from "@/types/map";
+import { LocationSearch } from "@/components/location/location-search";
+import type { SelectedLocation } from "@/types/map";
 import type {
   DistanceUnit,
   PlannerConfig,
@@ -84,23 +85,26 @@ interface PlannerFormProps {
   isGenerating: boolean;
   onGenerate: (config: PlannerConfig) => void;
   onFormChange: () => void;
-  selectedMapPoint: MapCoordinate | null;
-  onClearMapPoint: () => void;
+  selectedLocation: SelectedLocation | null;
+  locationQuery: string;
+  onLocationQueryChange: (query: string) => void;
+  onLocationSelect: (location: SelectedLocation) => void;
+  onLocationClear: () => void;
 }
 
 export function PlannerForm({
   isGenerating,
   onGenerate,
   onFormChange,
-  selectedMapPoint,
-  onClearMapPoint,
+  selectedLocation,
+  locationQuery,
+  onLocationQueryChange,
+  onLocationSelect,
+  onLocationClear,
 }: PlannerFormProps) {
   const [config, setConfig] = useState(initialConfig);
-  const [locationMessage, setLocationMessage] = useState("");
-  const startingLocation =
-    config.startingLocation || (selectedMapPoint ? "Dropped map pin" : "");
   const maximumDistance = config.unit === "miles" ? 50 : 80;
-  const isLocationValid = startingLocation.trim().length > 0;
+  const isLocationValid = selectedLocation !== null;
   const isDistanceValid =
     Number.isFinite(config.distance) &&
     config.distance > 0 &&
@@ -151,7 +155,7 @@ export function PlannerForm({
     if (isValid && !isGenerating) {
       onGenerate({
         ...config,
-        startingLocation: startingLocation.trim(),
+        startingLocation: selectedLocation.label,
       });
     }
   }
@@ -173,78 +177,19 @@ export function PlannerForm({
           </span>
         </div>
 
-        <label
-          className="text-sm font-semibold text-slate-800"
-          htmlFor="starting-location"
-        >
-          Starting location
-        </label>
-        <input
-          id="starting-location"
-          type="text"
-          disabled={isGenerating}
-          value={startingLocation}
-          onChange={(event) =>
-            updateConfig("startingLocation", event.target.value)
+        <LocationSearch
+          key={
+            selectedLocation
+              ? `${selectedLocation.source}:${selectedLocation.longitude}:${selectedLocation.latitude}`
+              : "no-selected-location"
           }
-          placeholder="Enter an address or neighborhood"
-          aria-describedby="location-help location-status"
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          selectedLocation={selectedLocation}
+          query={locationQuery}
+          disabled={isGenerating}
+          onQueryChange={onLocationQueryChange}
+          onLocationSelect={onLocationSelect}
+          onLocationClear={onLocationClear}
         />
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <p id="location-help" className="text-xs text-slate-500">
-            Enter a label or click the map to place a starting point. Typed
-            labels do not reposition the map.
-          </p>
-          <button
-            type="button"
-            disabled={isGenerating}
-            onClick={() =>
-              setLocationMessage(
-                "Live location support will be added in a later milestone.",
-              )
-            }
-            className="rounded-lg px-2 py-1 text-sm font-semibold text-emerald-700 outline-none transition hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
-          >
-            Use current location
-          </button>
-        </div>
-        <p
-          id="location-status"
-          className="mt-2 text-xs font-medium text-amber-800"
-          aria-live="polite"
-        >
-          {locationMessage}
-        </p>
-        {selectedMapPoint && (
-          <div
-            className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3"
-            aria-live="polite"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">
-                  Map starting point
-                </p>
-                <p className="mt-1 font-mono text-xs text-slate-700">
-                  {selectedMapPoint.latitude.toFixed(5)} latitude ·{" "}
-                  {selectedMapPoint.longitude.toFixed(5)} longitude
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={isGenerating}
-                onClick={onClearMapPoint}
-                className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 ring-1 ring-emerald-300 outline-none transition hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Clear map point
-              </button>
-            </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">
-              This coordinate is real. Generated route metrics remain demo data.
-            </p>
-          </div>
-        )}
       </div>
 
       <fieldset>
@@ -417,7 +362,7 @@ export function PlannerForm({
         </button>
         <p id="form-validation" className="mt-2 text-center text-xs text-slate-500">
           {!isLocationValid
-            ? "Enter a starting location to generate demo routes."
+            ? "Select a starting location to generate demo routes."
             : !isDistanceValid
               ? `Enter a valid distance up to ${maximumDistance} ${config.unit}.`
               : "Routes use illustrative data only."}
